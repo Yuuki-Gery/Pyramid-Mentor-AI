@@ -1,0 +1,62 @@
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# ---------- Virtual environments ----------
+venv/
+.venv/
+env/
+ENV/
+.python-version
+
+# ---------- Environment / secrets ----------
+.env
+.env.*
+!.env.example
+
+# ---------- Databases / runtime state ----------
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+backend/pyramid.db
+
+# ---------- Logs ----------
+*.log
+logs/
+
+# ---------- IDE / OS ----------
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- Local backup created during repository cleanup ----------
+.dsh-backup/
+
+# ---------- Local development artifacts ----------
+# The SCQA PDF is kept locally but is not distributed because its metadata
+# contains a local machine path and redistribution rights are unverified.
+/docs/scqa.pdf
+
+# Temporary files produced while this repository was being debugged.
+/_*.py
+/_*.txt
+/target__*
+/temp_*
+/response.txt
+/response.json
+/agent_response.json
+
+# ---------- Node (unused by the current frontend, kept safe for future tooling) ----------
+node_modules/
+frontend/node_modules/

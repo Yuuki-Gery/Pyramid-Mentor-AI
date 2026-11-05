@@ -1,0 +1,68 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: pyramid-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    volumes:
+      # Development bind mount: code changes are picked up on restart.
+      - ./backend:/app
+      - ./docs:/app/docs
+      - ./frontend:/app/frontend
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  redis:
+    # Pinned by digest to avoid an unexpected upstream `latest` update.
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
+    container_name: pyramid-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - pyramid_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chromadb:
+    # Chroma 1.4.4, pinned by digest; validated with chromadb client 1.5.9.
+    image: chromadb/chroma@sha256:1e0b73a187a28757c572acba508c46f48c9e8b0acaf5c20e6d95cdedce1acdf6
+    container_name: pyramid-chroma
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8001:8000"
+    volumes:
+      # Chroma 1.4.4 persists to /data; the older /chroma/chroma path would
+      # lose the collection when the container is recreated.
+      - pyramid_chroma_data:/data
+    healthcheck:
+      # The Chroma image has no curl/wget/python; bash's /dev/tcp is available.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8000"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  pyramid_redis_data:
+  pyramid_chroma_data:

@@ -1,0 +1,24 @@
+# Never copy local credentials or runtime data into an image.
+.env
+.env.*
+!.env.example
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.log
+logs/
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+tests/
+requirements-dev.txt
+.dockerignore
+.DS_Store
+Thumbs.db

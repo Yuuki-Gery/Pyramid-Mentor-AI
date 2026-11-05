@@ -1,0 +1,688 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>🧠 金字塔导师 - Pyramid Mentor AI</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --primary:#6366f1;
+  --primary-dark:#4f46e5;
+  --primary-light:#eef2ff;
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --text:#1e293b;
+  --text2:#64748b;
+  --border:#e2e8f0;
+  --success:#22c55e;
+  --warning:#f59e0b;
+  --danger:#ef4444;
+  --shadow:0 1px 3px rgba(0,0,0,0.06);
+  --radius:12px;
+  --radius-sm:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC",sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:hidden;}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+
+/* Sidebar */
+.sidebar{width:240px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;z-index:10;}
+.sidebar-header{padding:18px 16px;border-bottom:1px solid var(--border);}
+.sidebar-header h1{font-size:17px;background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.sidebar-header .sub{font-size:11px;color:var(--text2);margin-top:2px;}
+.sidebar-nav{flex:1;overflow-y:auto;padding:8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);font-size:13px;cursor:pointer;transition:all .15s;color:var(--text);user-select:none;margin-bottom:2px;}
+.nav-item:hover{background:#f1f5f9;}
+.nav-item.active{background:var(--primary-light);color:var(--primary);font-weight:500;}
+.nav-item .ico{font-size:15px;width:20px;text-align:center;}
+.nav-item .lb{flex:1;}
+.status-bar{padding:10px 12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.status-dot.online{background:var(--success);}
+.status-dot.offline{background:var(--danger);}
+.status-dot.loading{background:var(--warning);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;}
+.toolbar{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;background:var(--card);flex-shrink:0;}
+.toolbar .title{font-size:14px;font-weight:500;color:var(--text2);}
+.toolbar .badge{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--primary-light);color:var(--primary);}
+.toolbar .clear-btn{font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;margin-left:auto;}
+.toolbar .clear-btn:hover{background:#f1f5f9;}
+
+/* Chat area */
+.chat-area{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth;}
+.chat-area:empty{justify-content:center;align-items:center;}
+.welcome{text-align:center;max-width:480px;margin:auto;padding:30px 20px;}
+.welcome h2{font-size:22px;margin-bottom:8px;}
+.welcome p{color:var(--text2);font-size:13px;line-height:1.7;margin-bottom:4px;}
+.welcome .examples{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:20px;text-align:left;}
+.welcome .example-card{padding:14px 16px;border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;background:var(--card);}
+.welcome .example-card:hover{border-color:var(--primary);box-shadow:0 2px 12px rgba(99,102,241,.08);}
+.welcome .example-card .ex-ico{font-size:20px;margin-bottom:4px;}
+.welcome .example-card .ex-title{font-size:13px;font-weight:500;color:var(--text);}
+.welcome .example-card .ex-desc{font-size:11px;color:var(--text2);margin-top:2px;}
+@media(max-width:600px){
+  .welcome .examples{grid-template-columns:1fr;}
+  .sidebar{display:none;position:fixed;left:0;top:0;bottom:0;z-index:100;}
+  .sidebar.open{display:flex;}
+}
+
+.message{max-width:85%;padding:12px 16px;border-radius:var(--radius);line-height:1.6;font-size:14px;word-wrap:break-word;overflow-wrap:break-word;white-space:pre-wrap;}
+.message.user{background:var(--primary);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+.message.assistant{background:var(--card);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px;box-shadow:var(--shadow);}
+.message .msg-label{font-size:11px;font-weight:500;margin-bottom:4px;}
+.message.user .msg-label{opacity:.7;}
+.message .msg-time{font-size:10px;color:var(--text2);margin-top:6px;opacity:.6;}
+.message.user .msg-time{color:rgba(255,255,255,.6);}
+.message.assistant h3{margin:12px 0 6px;font-size:15px;}
+.message.assistant h4{margin:10px 0 4px;font-size:14px;color:var(--primary);}
+.message.assistant ul,.message.assistant ol{padding-left:18px;margin:6px 0;}
+.message.assistant li{margin:3px 0;}
+.message.assistant blockquote{border-left:3px solid var(--primary-light);padding:6px 12px;margin:8px 0;background:#f8fafc;border-radius:4px;font-size:13px;color:var(--text2);}
+.message.assistant pre{background:#f1f5f9;padding:12px;border-radius:8px;font-size:12px;overflow-x:auto;margin:8px 0;}
+
+/* Typing indicator */
+.typing{display:flex;gap:5px;padding:4px 0;}
+.typing span{width:8px;height:8px;border-radius:50%;background:#cbd5e1;display:inline-block;animation:typingBounce 1.4s infinite;}
+.typing span:nth-child(2){animation-delay:.2s;}
+.typing span:nth-child(3){animation-delay:.4s;}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+/* Input area */
+.input-area{padding:12px 20px 16px;border-top:1px solid var(--border);background:var(--card);display:flex;gap:10px;align-items:flex-end;}
+.input-area textarea{flex:1;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:14px;resize:none;font-family:inherit;outline:none;max-height:120px;line-height:1.5;background:var(--bg);transition:border-color .15s;}
+.input-area textarea:focus{border-color:var(--primary);}
+.input-area textarea::placeholder{color:var(--text2);}
+.send-btn{width:42px;height:42px;border-radius:var(--radius-sm);border:none;background:var(--primary);color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;transition:background .15s,opacity .15s;display:flex;align-items:center;justify-content:center;}
+.send-btn:hover{background:var(--primary-dark);}
+.send-btn:disabled{background:#cbd5e1;cursor:not-allowed;opacity:.6;}
+.send-btn.loading{opacity:.7;pointer-events:none;}
+
+/* Panels */
+.panel{display:none;flex:1;overflow-y:auto;padding:20px;}
+.panel.active{display:block;}
+.panel .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+.panel .card h3{font-size:15px;margin-bottom:10px;}
+.panel .card h4{font-size:13px;margin:12px 0 6px;color:var(--text2);}
+.panel .stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0;}
+.panel .stat-item{text-align:center;padding:14px;border-radius:10px;}
+.panel .stat-item .num{font-size:22px;font-weight:700;}
+.panel .stat-item .lbl{font-size:11px;color:var(--text2);margin-top:2px;}
+
+/* Pyramid analysis panel */
+.pyramid-tree{border-left:3px solid var(--primary);padding:8px 14px;margin:10px 0;background:#fafaff;border-radius:4px;font-size:13px;line-height:1.7;}
+.pyramid-tree .level-1{color:var(--primary);font-weight:600;font-size:14px;margin:8px 0 4px;}
+.pyramid-tree .level-2{color:var(--text);margin:4px 0 2px 16px;}
+.pyramid-tree .level-3{color:var(--text2);margin:2px 0 2px 32px;}
+
+/* Spinner */
+.spinner{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:768px){
+  .sidebar{width:200px;}
+  .message{max-width:92%;}
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1>🧠 金字塔导师</h1>
+    <div class="sub">Pyramid Mentor AI</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-item active" data-view="chat" onclick="switchView('chat')">
+      <span class="ico">💬</span><span class="lb">对话</span>
+    </div>
+    <div class="nav-item" data-view="pyramid" onclick="switchView('pyramid')">
+      <span class="ico">🔺</span><span class="lb">金字塔分析</span>
+    </div>
+    <div class="nav-item" data-view="growth" onclick="switchView('growth')">
+      <span class="ico">📈</span><span class="lb">成长追踪</span>
+    </div>
+    <div class="nav-item" data-view="goals" onclick="switchView('goals')">
+      <span class="ico">🎯</span><span class="lb">目标</span>
+    </div>
+    <div class="nav-item" data-view="profile" onclick="switchView('profile')">
+      <span class="ico">👤</span><span class="lb">用户画像</span>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">检查连接中...</span>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <span class="title" id="viewTitle">💬 对话</span>
+    <span class="badge" id="modelBadge">Pyramid 3.5</span>
+    <button class="clear-btn" id="clearBtn" onclick="clearChat()" style="display:none;">🗑 清空</button>
+  </div>
+
+  <!-- Chat Area (view: chat) -->
+  <div class="chat-area" id="chatArea">
+    <div class="welcome" id="welcomeScreen">
+      <h2>👋 你好！我是金字塔导师</h2>
+      <p>我能帮你分析问题、规划目标、训练思考方式。<br>也可以像朋友一样聊天 😊</p>
+      <div class="examples">
+        <div class="example-card" onclick="fillInput('你好，我想聊聊职业规划')">
+          <div class="ex-ico">💼</div>
+          <div class="ex-title">职业规划</div>
+          <div class="ex-desc">分析职业发展方向</div>
+        </div>
+        <div class="example-card" onclick="fillInput('最近感觉很迷茫，不知道该怎么办')">
+          <div class="ex-ico">🌱</div>
+          <div class="ex-title">成长困惑</div>
+          <div class="ex-desc">解决迷茫和焦虑</div>
+        </div>
+        <div class="example-card" onclick="fillInput('你好')">
+          <div class="ex-ico">💬</div>
+          <div class="ex-title">打个招呼</div>
+          <div class="ex-desc">先聊聊天熟悉一下</div>
+        </div>
+        <div class="example-card" onclick="fillInput('我想学一项新技能，怎么开始')">
+          <div class="ex-ico">📚</div>
+          <div class="ex-title">学习计划</div>
+          <div class="ex-desc">制定学习路线</div>
+        </div>
+        <div class="example-card" onclick="fillInput('我想创业，有什么建议')">
+          <div class="ex-ico">🚀</div>
+          <div class="ex-title">创业建议</div>
+          <div class="ex-desc">分析创业方向</div>
+        </div>
+        <div class="example-card" onclick="fillInput('帮我分析一下我的优势')">
+          <div class="ex-ico">💪</div>
+          <div class="ex-title">优势分析</div>
+          <div class="ex-desc">发掘个人优势</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pyramid Analysis Panel -->
+  <div class="panel" id="pyramidPanel">
+    <div class="card">
+      <h3>🔺 金字塔思维分析</h3>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:12px;">
+        每次对话后，AI 会使用 SCQA、MECE、逻辑树等框架分析你的问题。
+        切换到「对话」视图开始提问，分析结果会自动显示在这里。
+      </p>
+      <div id="pyramidContent">
+        <p style="color:var(--text2);font-size:13px;padding:20px 0;">暂无分析数据。开始对话后自动生成。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Growth Panel -->
+  <div class="panel" id="growthPanel">
+    <div class="card" id="growthCard">
+      <div style="text-align:center;padding:40px 0;"><div class="spinner"></div><p style="color:var(--text2);font-size:13px;margin-top:8px;">加载成长数据...</p></div>
+    </div>
+  </div>
+
+  <!-- Goals Panel -->
+  <div class="panel" id="goalsPanel">
+    <div class="card" id="goalsCard">
+      <div style="text-align:center;padding:40px 0;"><div class="spinner"></div><p style="color:var(--text2);font-size:13px;margin-top:8px;">加载目标数据...</p></div>
+    </div>
+  </div>
+
+  <!-- Profile Panel -->
+  <div class="panel" id="profilePanel">
+    <div class="card" id="profileCard">
+      <div style="text-align:center;padding:40px 0;"><div class="spinner"></div><p style="color:var(--text2);font-size:13px;margin-top:8px;">加载用户画像...</p></div>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="input-area" id="inputArea">
+    <textarea id="inputBox" rows="1" placeholder="输入你的问题或想法..." autofocus></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+  </div>
+
+</div>
+
+<script>
+// ===== State =====
+const STORAGE_KEY = "pyramid_chat";
+const API_URL = "/api/chat";
+let sessionId = "sess_" + Date.now() + "_" + Math.random().toString(36).slice(2,8);
+let chatHistory = [];
+let isSending = false;
+let currentView = "chat";
+let lastAnalysis = null;
+
+// ===== Load history =====
+try{
+  var saved = localStorage.getItem(STORAGE_KEY);
+  if(saved) chatHistory = JSON.parse(saved);
+}catch(e){}
+
+// ===== View switching =====
+function switchView(view){
+  currentView = view;
+  document.querySelectorAll(".nav-item").forEach(function(el){
+    el.classList.toggle("active", el.dataset.view === view);
+  });
+
+  var chatArea = document.getElementById("chatArea");
+  var pyramidPanel = document.getElementById("pyramidPanel");
+  var growthPanel = document.getElementById("growthPanel");
+  var goalsPanel = document.getElementById("goalsPanel");
+  var profilePanel = document.getElementById("profilePanel");
+  var inputArea = document.getElementById("inputArea");
+  var clearBtn = document.getElementById("clearBtn");
+
+  if(chatArea) chatArea.style.display = view === "chat" ? "flex" : "none";
+  if(pyramidPanel) pyramidPanel.className = "panel" + (view === "pyramid" ? " active" : "");
+  if(growthPanel) growthPanel.className = "panel" + (view === "growth" ? " active" : "");
+  if(goalsPanel) goalsPanel.className = "panel" + (view === "goals" ? " active" : "");
+  if(profilePanel) profilePanel.className = "panel" + (view === "profile" ? " active" : "");
+  if(inputArea) inputArea.style.display = view === "chat" ? "flex" : "none";
+  if(clearBtn) clearBtn.style.display = (view === "chat" && chatHistory.length > 0) ? "inline-block" : "none";
+
+  var titles = {
+    chat: "💬 对话",
+    pyramid: "🔺 金字塔分析",
+    growth: "📈 成长追踪",
+    goals: "🎯 目标",
+    profile: "👤 用户画像"
+  };
+  var viewTitle = document.getElementById("viewTitle");
+  if(viewTitle) viewTitle.textContent = titles[view];
+
+  if(view === "growth") loadGrowth();
+  if(view === "goals") loadGoals();
+  if(view === "profile") loadProfile();
+  if(view === "pyramid") renderPyramidAnalysis();
+}
+
+// ===== Render chat =====
+function renderChat(){
+  var area = document.getElementById("chatArea");
+  var welcome = document.getElementById("welcomeScreen");
+  if(!area) return;
+
+  if(chatHistory.length === 0){
+    area.innerHTML = "";
+    if(welcome) area.appendChild(welcome);
+    var btn = document.getElementById("clearBtn");
+    if(btn) btn.style.display = "none";
+    return;
+  }
+
+  // Remove welcome from DOM before setting innerHTML (to avoid destroying it)
+  if(welcome && welcome.parentNode === area){
+    area.removeChild(welcome);
+  }
+
+  var btn = document.getElementById("clearBtn");
+  if(btn) btn.style.display = "inline-block";
+
+  area.innerHTML = chatHistory.map(function(msg){
+    var label = msg.role === "user" ? "你" : "🧠 金字塔导师";
+    return "<div class=\"message " + msg.role + "\">" +
+      "<div class=\"msg-label\">" + label + "</div>" +
+      formatContent(msg.content) +
+      "<div class=\"msg-time\">" + (msg.time || "") + "</div></div>";
+  }).join("");
+  area.scrollTop = area.scrollHeight;
+}
+
+function formatContent(text){
+  if(!text) return "";
+  var s = escapeHtml(text);
+  return s
+    .replace(/## (.+)/g, "<h3>$1</h3>")
+    .replace(/### (.+)/g, "<h4>$1</h4>")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/```(\w*)\n?([\s\S]*?)```/g, "<pre>$2</pre>")
+    .replace(/\n/g, "<br>");
+}
+
+function escapeHtml(s){
+  if(!s) return "";
+  return String(s).replace(/[&<>]/g, function(c){
+    return {"&":"&#38;","<":"&#60;",">":"&#62;"}[c];
+  });
+}
+
+// ===== Send message =====
+async function sendMessage(){
+  if(isSending) return;
+  var input = document.getElementById("inputBox");
+  if(!input) return;
+  var text = input.value.trim();
+  if(!text) return;
+
+  // Hide welcome safely
+  var welcome = document.getElementById("welcomeScreen");
+  if(welcome) welcome.style.display = "none";
+
+  var now = new Date();
+  var ts = now.toLocaleTimeString("zh-CN", {hour:"2-digit",minute:"2-digit"});
+  chatHistory.push({role:"user", content:text, time:ts});
+  renderChat();
+  input.value = "";
+  input.style.height = "auto";
+
+  isSending = true;
+  var btn = document.getElementById("sendBtn");
+  if(btn){
+    btn.disabled = true;
+    btn.classList.add("loading");
+    btn.textContent = "...";
+  }
+
+  // Typing indicator
+  var area = document.getElementById("chatArea");
+  if(area){
+    var typingDiv = document.createElement("div");
+    typingDiv.className = "message assistant";
+    typingDiv.id = "typingIndicator";
+    typingDiv.innerHTML = "<div class=\"typing\"><span></span><span></span><span></span></div>";
+    area.appendChild(typingDiv);
+    area.scrollTop = area.scrollHeight;
+  }
+
+  try{
+    var res = await fetch(API_URL, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: text, session_id: sessionId})
+    });
+    var typingInd = document.getElementById("typingIndicator");
+    if(typingInd) typingInd.remove();
+
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    var data = await res.json();
+
+    if(data.analysis){
+      lastAnalysis = data.analysis;
+    }
+
+    var reply = data.mentor_response || "抱歉，暂时无法回复。";
+    var rt = new Date().toLocaleTimeString("zh-CN", {hour:"2-digit",minute:"2-digit"});
+    chatHistory.push({role:"assistant", content:reply, time:rt});
+    renderChat();
+    try{localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));}catch(e){}
+  }catch(e){
+    var typingInd = document.getElementById("typingIndicator");
+    if(typingInd) typingInd.remove();
+
+    var et = new Date().toLocaleTimeString("zh-CN", {hour:"2-digit",minute:"2-digit"});
+    var errMsg = "⚠️ **请求失败**\n\n无法连接到后端服务，请确认服务已启动。";
+    if(e.message && e.message.startsWith("HTTP")){
+      errMsg = "⚠️ **服务器错误** (" + e.message + ")\n\n请稍后重试。";
+    }
+    chatHistory.push({role:"assistant", content:errMsg, time:et});
+    renderChat();
+  }
+
+  isSending = false;
+  if(btn){
+    btn.disabled = false;
+    btn.classList.remove("loading");
+    btn.textContent = "➤";
+  }
+}
+
+// ===== Fill input =====
+function fillInput(text){
+  var input = document.getElementById("inputBox");
+  if(!input) return;
+  input.value = text;
+  input.focus();
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 120) + "px";
+}
+
+// ===== Clear chat =====
+function clearChat(){
+  if(!confirm("确定清空对话吗？")) return;
+  chatHistory = [];
+  sessionId = "sess_" + Date.now() + "_" + Math.random().toString(36).slice(2,8);
+  lastAnalysis = null;
+  try{localStorage.removeItem(STORAGE_KEY);}catch(e){}
+  switchView("chat");
+}
+
+// ===== Check connection =====
+async function checkConnection(){
+  var dot = document.getElementById("statusDot");
+  var txt = document.getElementById("statusText");
+  if(!dot || !txt) return;
+  dot.className = "status-dot loading";
+  txt.textContent = "检查连接中...";
+  try{
+    var res = await fetch("/health", {signal: AbortSignal.timeout(3000)});
+    if(res.ok){
+      dot.className = "status-dot online";
+      txt.textContent = "已连接";
+    }else{
+      dot.className = "status-dot offline";
+      txt.textContent = "服务异常";
+    }
+  }catch(e){
+    dot.className = "status-dot offline";
+    txt.textContent = "未连接";
+  }
+}
+
+// ===== Pyramid analysis panel =====
+function renderPyramidAnalysis(){
+  var content = document.getElementById("pyramidContent");
+  if(!content) return;
+
+  if(!lastAnalysis){
+    content.innerHTML = '<p style="color:var(--text2);font-size:13px;padding:20px 0;">暂无分析数据。开始对话后自动生成。</p>';
+    return;
+  }
+
+  var html = '<div class="pyramid-tree">';
+  if(lastAnalysis.scqa){
+    html += '<div class="level-1">📋 SCQA 分析</div>';
+    if(lastAnalysis.scqa.situation) html += '<div class="level-2"><strong>S (情境):</strong> ' + escapeHtml(lastAnalysis.scqa.situation) + '</div>';
+    if(lastAnalysis.scqa.complication) html += '<div class="level-2"><strong>C (冲突):</strong> ' + escapeHtml(lastAnalysis.scqa.complication) + '</div>';
+    if(lastAnalysis.scqa.question) html += '<div class="level-2"><strong>Q (问题):</strong> ' + escapeHtml(lastAnalysis.scqa.question) + '</div>';
+    if(lastAnalysis.scqa.answer) html += '<div class="level-2"><strong>A (答案):</strong> ' + escapeHtml(lastAnalysis.scqa.answer) + '</div>';
+  }
+  if(lastAnalysis.mece){
+    html += '<div class="level-1" style="margin-top:12px;">📊 MECE 拆解</div>';
+    if(typeof lastAnalysis.mece === 'object'){
+      for(var key in lastAnalysis.mece){
+        html += '<div class="level-2">• ' + escapeHtml(key) + ': ' + escapeHtml(String(lastAnalysis.mece[key])) + '</div>';
+      }
+    }
+  }
+  if(lastAnalysis.logic_tree){
+    html += '<div class="level-1" style="margin-top:12px;">🌳 逻辑树</div>';
+    if(Array.isArray(lastAnalysis.logic_tree)){
+      lastAnalysis.logic_tree.forEach(function(item){
+        html += '<div class="level-2">├─ ' + escapeHtml(String(item)) + '</div>';
+      });
+    }
+  }
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+// ===== Growth panel =====
+async function loadGrowth(){
+  var card = document.getElementById("growthCard");
+  if(!card) return;
+  card.innerHTML = '<div style="text-align:center;padding:40px 0;"><div class="spinner"></div><p style="color:var(--text2);font-size:13px;margin-top:8px;">加载中...</p></div>';
+  try{
+    var res = await fetch("/api/growth-memory/summary", {signal: AbortSignal.timeout(10000)});
+    if(!res.ok) throw new Error("fail");
+    var d = await res.json();
+    var s = d.summary || {};
+    var milestones = s.recent_milestones || [];
+    var goals = s.active_goals || [];
+
+    var milestonesHtml = milestones.length ? milestones.map(function(m){
+      return "<div style=\"padding:8px 10px;background:#f8fafc;border-radius:6px;margin:4px 0;border-left:3px solid var(--success);\">" +
+        "<div style=\"font-size:12px;font-weight:500;\">" + escapeHtml(m.title) + "</div>" +
+        (m.description ? "<div style=\"font-size:11px;color:var(--text2);margin-top:2px;\">" + escapeHtml(m.description) + "</div>" : "") +
+        "</div>";
+    }).join("") : "<p style=\"color:var(--text2);font-size:13px;\">暂无成长记录</p>";
+
+    var goalsHtml = goals.length ? goals.map(function(g){
+      return "<div style=\"padding:8px 10px;background:#fefce8;border-radius:6px;margin:4px 0;border-left:3px solid var(--warning);\">" +
+        "<div style=\"font-size:12px;font-weight:500;\">🎯 " + escapeHtml(g.goal) + "</div>" +
+        (g.context ? "<div style=\"font-size:11px;color:var(--text2);margin-top:2px;\">" + escapeHtml(g.context) + "</div>" : "") +
+        "</div>";
+    }).join("") : "<p style=\"color:var(--text2);font-size:13px;\">暂无进行中的目标</p>";
+
+    card.innerHTML = "<h3>📈 成长概览</h3>" +
+      "<div class=\"stat-grid\">" +
+        "<div class=\"stat-item\" style=\"background:#f0fdf4;\"><div class=\"num\" style=\"color:var(--success);\">" + (s.milestones_count || 0) + "</div><div class=\"lbl\">里程碑</div></div>" +
+        "<div class=\"stat-item\" style=\"background:#fefce8;\"><div class=\"num\" style=\"color:var(--warning);\">" + (s.active_goals_count || 0) + "</div><div class=\"lbl\">进行中</div></div>" +
+        "<div class=\"stat-item\" style=\"background:#f0fdf4;\"><div class=\"num\" style=\"color:var(--success);\">" + (s.completed_goals_count || 0) + "</div><div class=\"lbl\">已完成</div></div>" +
+      "</div>" +
+      (s.summary ? "<blockquote style=\"border-left:3px solid var(--primary);padding:8px 14px;margin:12px 0;background:#f8fafc;border-radius:4px;font-size:13px;color:var(--text2);\">" + escapeHtml(s.summary) + "</blockquote>" : "") +
+      "<h4>🎯 进行中的目标</h4>" + goalsHtml +
+      "<h4 style=\"margin-top:14px;\">🏆 最近里程碑</h4>" + milestonesHtml;
+  }catch(e){
+    card.innerHTML = "<h3>📈 成长概览</h3><p style=\"color:var(--text2);font-size:13px;padding:20px 0;\">⚠️ 无法加载成长数据。请确保后端服务已启动。</p>";
+  }
+}
+
+// ===== Goals panel =====
+async function loadGoals(){
+  var card = document.getElementById("goalsCard");
+  if(!card) return;
+  card.innerHTML = '<div style="text-align:center;padding:40px 0;"><div class="spinner"></div><p style="color:var(--text2);font-size:13px;margin-top:8px;">加载中...</p></div>';
+  try{
+    var res = await fetch("/api/growth-memory/goals", {signal: AbortSignal.timeout(10000)});
+    if(!res.ok) throw new Error("fail");
+    var d = await res.json();
+    var goals = d.goals || [];
+    card.innerHTML = "<h3>🎯 目标管理</h3>" +
+      (goals.length === 0
+        ? "<p style=\"color:var(--text2);font-size:13px;padding:20px 0;\">暂无目标。在对话中设定目标后会自动记录。</p>"
+        : goals.map(function(g){
+          var sc = g.status === "已完成" ? "var(--success)" : g.status === "已放弃" ? "var(--danger)" : "var(--warning)";
+          var bc = g.status === "已完成" ? "#f0fdf4" : g.status === "已放弃" ? "#fef2f2" : "#fefce8";
+          return "<div style=\"padding:12px 14px;background:#f8fafc;border-radius:8px;margin:8px 0;border-left:3px solid " + sc + ";\">" +
+            "<div style=\"display:flex;justify-content:space-between;align-items:center;\">" +
+              "<strong style=\"font-size:13px;\">" + escapeHtml(g.goal) + "</strong>" +
+              "<span style=\"font-size:10px;padding:2px 8px;border-radius:8px;background:" + bc + ";color:" + sc + ";\">" + escapeHtml(g.status) + "</span>" +
+            "</div>" +
+            (g.context ? "<div style=\"font-size:12px;color:var(--text2);margin-top:4px;\">📝 " + escapeHtml(g.context) + "</div>" : "") +
+            "</div>";
+        }).join("")
+      );
+  }catch(e){
+    card.innerHTML = "<h3>🎯 目标管理</h3><p style=\"color:var(--text2);font-size:13px;padding:20px 0;\">⚠️ 无法加载目标数据。请确保后端服务已启动。</p>";
+  }
+}
+
+// ===== Profile panel =====
+async function loadProfile(){
+  var card = document.getElementById("profileCard");
+  if(!card) return;
+  card.innerHTML = '<div style="text-align:center;padding:40px 0;"><div class="spinner"></div><p style="color:var(--text2);font-size:13px;margin-top:8px;">加载中...</p></div>';
+  try{
+    var res = await fetch("/api/growth-memory/thinking-pattern", {signal: AbortSignal.timeout(10000)});
+    if(!res.ok) throw new Error("fail");
+    var d = await res.json();
+    var pattern = d.pattern || {};
+
+    var html = "<h3>👤 用户画像</h3>";
+
+    html += "<h4>📋 背景信息</h4>";
+    if(pattern.background){
+      html += "<p style=\"font-size:13px;margin-bottom:12px;\">" + escapeHtml(pattern.background) + "</p>";
+    } else {
+      html += "<p style=\"color:var(--text2);font-size:13px;\">暂无背景信息。在对话中我会自动了解你。</p>";
+    }
+
+    html += "<h4>💡 技能与优势</h4>";
+    if(pattern.skills && pattern.skills.length > 0){
+      html += "<div style=\"display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;\">";
+      pattern.skills.forEach(function(skill){
+        html += "<span style=\"background:var(--primary-light);color:var(--primary);padding:4px 10px;border-radius:12px;font-size:12px;\">" + escapeHtml(skill) + "</span>";
+      });
+      html += "</div>";
+    } else {
+      html += "<p style=\"color:var(--text2);font-size:13px;\">暂无技能记录。</p>";
+    }
+
+    html += "<h4>🎯 目标</h4>";
+    if(pattern.goal){
+      html += "<p style=\"font-size:13px;margin-bottom:12px;\">" + escapeHtml(pattern.goal) + "</p>";
+    } else {
+      html += "<p style=\"color:var(--text2);font-size:13px;\">暂无目标设定。</p>";
+    }
+
+    html += "<h4>❤️ 兴趣领域</h4>";
+    if(pattern.interests && pattern.interests.length > 0){
+      html += "<div style=\"display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;\">";
+      pattern.interests.forEach(function(interest){
+        html += "<span style=\"background:#fefce8;color:var(--warning);padding:4px 10px;border-radius:12px;font-size:12px;\">" + escapeHtml(interest) + "</span>";
+      });
+      html += "</div>";
+    } else {
+      html += "<p style=\"color:var(--text2);font-size:13px;\">暂无兴趣记录。</p>";
+    }
+
+    html += "<h4>🔧 资源</h4>";
+    if(pattern.resources && pattern.resources.length > 0){
+      html += "<ul style=\"font-size:13px;padding-left:18px;\">";
+      pattern.resources.forEach(function(res){
+        html += "<li style=\"margin:3px 0;\">" + escapeHtml(res) + "</li>";
+      });
+      html += "</ul>";
+    } else {
+      html += "<p style=\"color:var(--text2);font-size:13px;\">暂无资源记录。</p>";
+    }
+
+    card.innerHTML = html;
+  }catch(e){
+    card.innerHTML = "<h3>👤 用户画像</h3><p style=\"color:var(--text2);font-size:13px;padding:20px 0;\">⚠️ 无法加载画像数据。请确认后端已启动并开始对话。</p>";
+  }
+}
+
+// ===== Input events =====
+document.addEventListener("DOMContentLoaded", function(){
+  var inputBox = document.getElementById("inputBox");
+  if(inputBox){
+    inputBox.addEventListener("input", function(){
+      this.style.height = "auto";
+      this.style.height = Math.min(this.scrollHeight, 120) + "px";
+    });
+    inputBox.addEventListener("keydown", function(e){
+      if(e.key === "Enter" && !e.shiftKey){
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  }
+});
+
+// ===== Init =====
+async function init(){
+  renderChat();
+  await checkConnection();
+  setInterval(checkConnection, 30000);
+}
+
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
